@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="280dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Singapore"
+            android:id="@+id/Location_tv"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="12sp"
+            android:textSize="40sp"
+            android:textColor="#000000"
+            android:textIsSelectable="false"
+            android:textStyle="bold"
+            android:typeface="sans" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Heavy Thunderstorms"
+            android:id="@+id/Condition_tv"
+            android:textStyle="bold"
+            android:textSize="20sp"
+            android:layout_below="@+id/Location_tv"
+            android:layout_centerHorizontal="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="23"
+            android:id="@+id/Temp_tv"
+            android:layout_below="@+id/Condition_tv"
+            android:layout_alignParentEnd="false"
+            android:textSize="140sp"
+            android:textStyle="bold"
+            android:textIsSelectable="false"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="-15dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="°"
+            android:id="@+id/TempTv_companion"
+            android:layout_alignTop="@+id/Temp_tv"
+            android:layout_toEndOf="@+id/Temp_tv"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:textSize="70sp"
+            android:layout_marginTop="25dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/TempTv_companion2"
+            android:layout_toRightOf="@+id/TempTv_companion"
+            android:layout_alignTop="@+id/TempTv_companion"
+            android:textColor="#000000"
+            android:textSize="40sp"
+            android:textStyle="bold"
+            android:layout_marginTop="10dp"
+            android:singleLine="false" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Feels like: 20°"
+            android:id="@+id/FeelTemp_tv"
+            android:layout_alignParentEnd="false"
+            android:textColor="#000000"
+            android:textSize="20sp"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@+id/Temp_tv"
+            android:layout_marginTop="-20dp" />
+
+</RelativeLayout>

@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">AnotherWeather</string>
+    <string name="version">Version 0.48\nWeather Data from Forecast.io\nWeather Icon courtesy of Daniel Vierich</string>
+    <string name="Refreshbtn_str">Refresh</string>
+    <string name="Settingsbtn_str">Settings</string>
+    <string name="tempUnit_title_str">Temperature Unit</string>
+    <string name="tempUnit_subtitle_str">Select your preferred temperature unit. \nCelcius or Fahrenheit</string>
+    <string name="tempUnit_c">Celsius</string>
+    <string name="tempUnit_f">Fahrenheit</string>
+    <string name="weathercond_clear">Clear</string>
+    <string name="weathercond_rain">Rain</string>
+    <string name="weathercond_snow">Snow</string>
+    <string name="weathercond_fog">Fog</string>
+    <string name="weathercond_sleet">Sleet</string>
+    <string name="weathercond_wind">Wind</string>
+    <string name="weathercond_cloudy">Clear</string>
+    <string name="weathercond_partcloud">Partly Cloudy</string>
+    <string name="humidity">Humidity</string>
+    <string name="pressure">Pressure</string>
+    <string name="visibility">Visibility</string>
+    <string name="windSpeed">Wind Speed</string>
+</resources>
