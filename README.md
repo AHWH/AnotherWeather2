@@ -1,9 +1,10 @@
 # AnotherWeather2
 This is a Weather app but it is an app for me to hone my Android programming skills. It is simple but it had taught me alot. 
 
+<img src="ForReadme/s1.png" width="200">  <img src="ForReadme/s2.png" width="200">   <img src="ForReadme/s3.png" height="260">
 
 ## What Can It Do
-Well, right now it is able to fetch weather from Forecast.io of Singapore only.
+Well, right now it is able to fetch weather from **Forecast.io** of Singapore only.
 
 * Clean and minimal design
 * Get current weather data
@@ -27,3 +28,8 @@ These are features I wished to implement down the road
 * Fancy graphics
 * GPS location
 * Add more location
+
+## Download
+You can compile the source yourself and install it but **do take note to fill in the apikey string value** in MainActivity with your own from Forecast.io. Alternatively you can download the pre-compiled apk.
+
+[Download Link](https://github.com/AHWH/AnotherWeather2/raw/master/ForReadme/AnotherWeather2-v0.48.apk)
