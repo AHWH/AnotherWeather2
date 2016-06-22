@@ -32,4 +32,6 @@ These are features I wished to implement down the road
 ## Download
 You can compile the source yourself and install it but **do take note to fill in the apikey string value** in MainActivity with your own from Forecast.io. Alternatively you can download the pre-compiled apk.
 
-[Download Link](https://github.com/AHWH/AnotherWeather2/raw/master/ForReadme/AnotherWeather2-v0.48.apk)
+[Download Link](https://github.com/AHWH/AnotherWeather2/raw/master/ForReadme/AnotherWeather2-latest.apk)
+[Changelog](https://github.com/AHWH/AnotherWeather2/releases)
+
