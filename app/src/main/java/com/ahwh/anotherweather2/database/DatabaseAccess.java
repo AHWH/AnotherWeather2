@@ -72,8 +72,10 @@ public class DatabaseAccess {
     //Retrieve data from Realm's database asynchronously
     public void getFromDB() {
         realm = Realm.getDefaultInstance();
-        results = realm.where(MainWeather_model.class).findAllAsync();
-        results.addChangeListener(callBack);
+        if(!realm.isEmpty()) {
+            results = realm.where(MainWeather_model.class).findAllAsync();
+            results.addChangeListener(callBack);
+        }
     }
 
     //Callback when the retrieval is done

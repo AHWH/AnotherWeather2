@@ -454,8 +454,10 @@ public class MainActivity extends AppCompatActivity {
 
     //Split the data to relevant variables and call methods to update the views
     public void dataSplitter(MainWeather_model mainWeather) {
-        memoryFragment.setMainWeather_model(mainWeather);
-        mainWeatherModel = mainWeather;
-        updateView();
+        if(mainWeather != null) {
+            memoryFragment.setMainWeather_model(mainWeather);
+            mainWeatherModel = mainWeather;
+            updateView();
+        }
     }
 }
