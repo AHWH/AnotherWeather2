@@ -1,35 +1,44 @@
-package com.ahwh.anotherweather2.database;
+package com.ahwh.anotherweather2.weatherModel;
 
-import com.raizlabs.android.dbflow.annotation.Column;
-import com.raizlabs.android.dbflow.annotation.PrimaryKey;
-import com.raizlabs.android.dbflow.annotation.Table;
-import com.raizlabs.android.dbflow.structure.BaseModel;
+import com.bluelinelabs.logansquare.annotation.JsonField;
+import com.bluelinelabs.logansquare.annotation.JsonObject;
+
+import io.realm.RealmObject;
+import io.realm.annotations.PrimaryKey;
 
 /**
- * Created by weiho on 21/5/2016.
+ * Created by weiho on 18/6/2016.
  */
-@Table(database = WeatherDatabase.class)
-public class CurrentWeather_db extends BaseModel{
+@JsonObject
+public class DailyData_model extends RealmObject {
     @PrimaryKey
-    public int id;
-    @Column
+    private int id;
+
+    @JsonField
     private long time;
-    @Column
+    @JsonField
     private String summary;
-    @Column
+    @JsonField
     private String icon;
-    @Column
-    private double temperature;
-    @Column
-    private double apparentTemperature;
-    @Column
+    @JsonField
+    private double temperatureMin;
+    @JsonField
+    private double temperatureMax;
+    @JsonField
     private double humidity;
-    @Column
+    @JsonField
     private double windSpeed;
-    @Column
+    @JsonField
     private double visibility;
-    @Column
+    @JsonField
     private double pressure;
+
+    public void setId(int id) {
+        this.id = id;
+    }
+    public int getId() {
+        return id;
+    }
 
     public void setTime(long time) {
         this.time = time;
@@ -40,11 +49,11 @@ public class CurrentWeather_db extends BaseModel{
     public void setIcon(String icon) {
         this.icon = icon;
     }
-    public void setTemperature(double temperature) {
-        this.temperature = temperature;
+    public void setTemperatureMin(double temperatureMin) {
+        this.temperatureMin = temperatureMin;
     }
-    public void setApparentTemperature(double apparentTemperature) {
-        this.apparentTemperature = apparentTemperature;
+    public void setTemperatureMax(double temperatureMax) {
+        this.temperatureMax = temperatureMax;
     }
     public void setHumidity(double humidity) {
         this.humidity = humidity;
@@ -68,11 +77,11 @@ public class CurrentWeather_db extends BaseModel{
     public String getIcon() {
         return icon;
     }
-    public double getTemperature() {
-        return temperature;
+    public double getTemperatureMin() {
+        return temperatureMin;
     }
-    public double getApparentTemperature() {
-        return apparentTemperature;
+    public double getTemperatureMax() {
+        return temperatureMax;
     }
     public double getHumidity() {
         return humidity;

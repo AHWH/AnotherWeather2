@@ -1,25 +1,32 @@
-package com.ahwh.anotherweather2;
+package com.ahwh.anotherweather2.database;
 
-import android.content.Context;
 import android.support.v7.widget.RecyclerView;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import java.util.List;
+import com.ahwh.anotherweather2.Helper;
+import com.ahwh.anotherweather2.MainActivity;
+import com.ahwh.anotherweather2.R;
+import com.ahwh.anotherweather2.weatherModel.DailyData_model;
+
+
+import io.realm.OrderedRealmCollection;
+import io.realm.RealmRecyclerViewAdapter;
+
 
 /**
  * Created by weiho on 28/5/2016.
  * Refer to HourlyForecast's Recyclerview Adapter for the comments as the structure is very similar
  */
-public class DailyForecast_RecyclerAdapter extends RecyclerView.Adapter<DailyForecast_RecyclerAdapter.ViewHolder> {
+public class DailyForecast_RecyclerAdapter extends RealmRecyclerViewAdapter<DailyData_model, DailyForecast_RecyclerAdapter.ViewHolder> {
 
-    List<WeatherForecast_Model.DailyData> dailyForecastArray;
+    private MainActivity mainActivity;
 
-    public DailyForecast_RecyclerAdapter(List<WeatherForecast_Model.DailyData> list) {
-        dailyForecastArray = list;
+    public DailyForecast_RecyclerAdapter(MainActivity mainActivity, OrderedRealmCollection<DailyData_model> data) {
+        super(mainActivity, data, true);
+        this.mainActivity = mainActivity;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -29,6 +36,7 @@ public class DailyForecast_RecyclerAdapter extends RecyclerView.Adapter<DailyFor
         TextView tempMin;
         TextView condition;
         ImageView icon;
+        DailyData_model data;
 
         public ViewHolder(View itemView) {
             super(itemView);
@@ -44,15 +52,13 @@ public class DailyForecast_RecyclerAdapter extends RecyclerView.Adapter<DailyFor
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        Context context = parent.getContext();
-        View view = LayoutInflater.from(context).inflate(R.layout.dailyforecastrv_row, parent, false);
-
+        View view = inflater.inflate(R.layout.dailyforecastrv_row, parent, false);
         return new ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        WeatherForecast_Model.DailyData dailyData = dailyForecastArray.get(position);
+        DailyData_model dailyData = getData().get(position);
 
         final String fullDateStr = Helper.dateConverter(dailyData.getTime());
         final String dateStr = fullDateStr.substring(0,2);
@@ -122,10 +128,5 @@ public class DailyForecast_RecyclerAdapter extends RecyclerView.Adapter<DailyFor
                 holder.icon.setImageResource(R.drawable.icon_sunny);
             }
         }
-    }
-
-    @Override
-    public int getItemCount() {
-        return dailyForecastArray.size();
     }
 }

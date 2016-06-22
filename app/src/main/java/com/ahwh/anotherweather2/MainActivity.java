@@ -1,50 +1,33 @@
 package com.ahwh.anotherweather2;
 
-import android.Manifest;
-import android.animation.ObjectAnimator;
+import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.location.Location;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.app.FragmentTransaction;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
-import android.view.View;
-import android.widget.Toast;
+import android.widget.TextView;
 
-import com.github.aurae.retrofit2.LoganSquareConverterFactory;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.LocationSettingsResult;
-import com.google.android.gms.location.LocationSettingsStates;
-import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.raizlabs.android.dbflow.config.FlowConfig;
-import com.raizlabs.android.dbflow.config.FlowManager;
+import com.ahwh.anotherweather2.weatherModel.DailyData_model;
+import com.ahwh.anotherweather2.weatherModel.HourlyData_model;
+import com.ahwh.anotherweather2.weatherModel.MainWeather_model;
+import com.ahwh.anotherweather2.database.DailyForecast_RecyclerAdapter;
+import com.ahwh.anotherweather2.database.DatabaseAccess;
+import com.ahwh.anotherweather2.database.HourlyForecast_RecyclerAdapter;
 
-import permissions.dispatcher.NeedsPermission;
-import permissions.dispatcher.RuntimePermissions;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
+import io.realm.RealmList;
+
 
 public class MainActivity extends AppCompatActivity {
     //GoogleApiClient googleApiClient;
@@ -59,32 +42,40 @@ public class MainActivity extends AppCompatActivity {
     //Creating gesture detector instance
     GestureDetectorCompat gestureDetectorCompat;
 
+    //Top fragment variable
     private WeatherFragment fragmentTop$1;
-    private WeatherInfo_Fragment fragmentTop$2;
+    private AdditionalWeatherInfo_Fragment fragmentTop$2;
+
+    //Worker fragment to persist weather data across runtime changes (e.g. orientation change)
+    public Memory_fragment memoryFragment;
+
+    private MainWeather_model mainWeatherModel;
+
+    private Realm realm;
+
+    private TextView condition_main;
+    private TextView temp_main;
+    private TextView temp_unit;
+    private TextView tempFeel_main;
+
+    private RecyclerView hourlyForecast_rv;
+    private RecyclerView dailyForecast_rv;
+
+    private boolean restoreState;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        //Setting global Realm's configuration
+        RealmConfiguration realmConfiguration = new RealmConfiguration.Builder(this).build();
+        Realm.setDefaultConfiguration(realmConfiguration);
 
         //Since ActionBar is disabled, ActionBar takes over. For now, it is essentially an ActionBar
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_mainactivity);
         setSupportActionBar(toolbar);
-        fragmentTop$1 = new WeatherFragment();
-        fragmentTop$2 = new WeatherInfo_Fragment();
-
-        FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-        fragmentTransaction.setCustomAnimations(R.animator.fade_in, R.animator.fade_out);
-        fragmentTransaction.replace(R.id.weather_fragment, fragmentTop$1);
-        fragmentTransaction.commit();
 
         //locationPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
-
-        //Initiate Flow Manager and retrieve data from database
-        FlowManager.init(new FlowConfig.Builder(this).build());
-        Helper helper = new Helper(MainActivity.this);
-        helper.retrieveData();
-
         //Creating Google Play Services' instance for Fused Location service
         //googleApiClient = new GoogleApiClient.Builder(this).addConnectionCallbacks(this)
         //                                                                    .addOnConnectionFailedListener(this)
@@ -94,6 +85,36 @@ public class MainActivity extends AppCompatActivity {
         //initiate gesture detector and hooking swipeListener to listen for swiping movement
         gestureDetectorCompat = new GestureDetectorCompat(this, new swipeListener());
 
+        //Detect if this is cold start or restart due to runtime change
+        if(savedInstanceState == null) {
+            fragmentTop$1 = new WeatherFragment();
+            fragmentTop$2 = new AdditionalWeatherInfo_Fragment();
+
+            FragmentManager fragmentManager = getFragmentManager();
+            FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+            fragmentTransaction.setCustomAnimations(R.animator.fade_in, R.animator.fade_out);
+            fragmentTransaction.add(R.id.weather_fragment, fragmentTop$1, "topFragment$1");
+
+            memoryFragment = new Memory_fragment();
+            fragmentTransaction.add(memoryFragment, "MemoryFragment");
+
+            fragmentTransaction.commit();
+            fragmentManager.executePendingTransactions();
+
+            restoreState = false;
+        }
+        //Prevent calling multiple instances of the same fragment when runtime changes by finding back the original instance through tag
+        else {
+            fragmentTop$1 = (WeatherFragment) getFragmentManager().findFragmentByTag("topFragment$1");
+            memoryFragment = (Memory_fragment) getFragmentManager().findFragmentByTag("MemoryFragment");
+            mainWeatherModel = memoryFragment.getMainWeather_model();
+            restoreState = true;
+        }
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
     }
 
     //Return touch event
@@ -109,6 +130,24 @@ public class MainActivity extends AppCompatActivity {
         //Connect to Google Play Service's API
        // Toast.makeText(this, "GAP is connected", Toast.LENGTH_SHORT).show();
        // googleApiClient.connect();
+
+        //Associate the view here to ensure the relevant Views are always valid
+        condition_main = (TextView) findViewById(R.id.Condition_tv);
+        temp_main = (TextView) findViewById(R.id.Temp_tv);
+        temp_unit = (TextView) findViewById(R.id.TempTv_companion2);
+        tempFeel_main = (TextView) findViewById(R.id.FeelTemp_tv);
+
+        hourlyForecast_rv = (RecyclerView) findViewById(R.id.HourlyForecast_rv);
+        dailyForecast_rv = (RecyclerView) findViewById(R.id.DailyForecast_rv);
+
+        //Depending on start state, do stuff
+        if(restoreState == false) {
+            DatabaseAccess databaseAccess = new DatabaseAccess(this, null);
+            databaseAccess.getFromDB();
+        }
+        if(restoreState == true) {
+            dataSplitter(mainWeatherModel);
+        }
     }
 
     @Override
@@ -117,85 +156,68 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-   @Override
-   public boolean onOptionsItemSelected(MenuItem item) {
-       int itemSelected = item.getItemId();
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int itemSelected = item.getItemId();
 
-       switch (itemSelected) {
-           //When the Refresh button is pressed
-           case R.id.Refresh_button: {
-               //Get coordinates for use to get weatherdata - not in use for now
-               //String coordinates;
-               //getLocationWrapper();
-               //if(latitude == null) {
-               //    Toast.makeText(this, "preventing a crash", Toast.LENGTH_SHORT).show();
-               //    return true;
-               //}
-               //else {
-               //    coordinates = latitude + "," + longtitude;
-               //    //LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
-               //    Log.i("", coordinates);
-               //}
+        switch (itemSelected) {
+            //When the Refresh button is pressed
+            case R.id.Refresh_button: {
+                //Force first fragment to be present to prevent app crash
+                if(!fragmentTop$1.isAdded()) {
+                     FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+                     fragmentTransaction.replace(R.id.weather_fragment, fragmentTop$1);
+                     fragmentTransaction.commit();
+                }
 
-               //Force first fragment to be present to prevent app crash
-               String apikey = "";
+                //Configuring arguments to Retrofit Instance
+                String serviceBaseURL = "https://api.forecast.io/forecast/";
+                String apiKey = "";
+                String coordinates = "1.3149013,103.7769791";
 
-               if(!fragmentTop$1.isAdded()) {
-                    FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-                    fragmentTransaction.replace(R.id.weather_fragment, fragmentTop$1);
-                    fragmentTransaction.commit();
-               }
+                //Get coordinates for use to get weatherdata - not in use for now
+                //String coordinates;
+                //getLocationWrapper();
+                //if(latitude == null) {
+                //    Toast.makeText(this, "preventing a crash", Toast.LENGTH_SHORT).show();
+                //    return true;
+                //}
+                //else {
+                //    coordinates = latitude + "," + longtitude;
+                //    //LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
+                //    Log.i("", coordinates);
+                //}
 
-               //Get unit preference to get the correct weather data (default is "Celsius", hence the else)
-               SharedPreferences preferencesFile = PreferenceManager.getDefaultSharedPreferences(this);
-               String unitPref = preferencesFile.getString("temp_unit", "");
-               String weatherUnit;
-               if (unitPref.equals("Fahrenheit")) {
-                   weatherUnit = "us";
-               } else {
-                   weatherUnit = "si";
-               }
+                //Get unit preference to get the correct weather data (default is "Celsius", hence the else)
+                SharedPreferences preferencesFile = PreferenceManager.getDefaultSharedPreferences(this);
+                String unitPref = preferencesFile.getString("temp_unit", "");
+                String weatherUnit;
+                if (unitPref.equals("Fahrenheit")) {
+                    weatherUnit = "us";
+                } else {
+                    weatherUnit = "si";
+                }
 
-               //Building retrofit instance
-               Retrofit retrofit = new Retrofit.Builder().baseUrl("https://api.forecast.io/forecast/")
-                                                         .addConverterFactory(LoganSquareConverterFactory.create())
-                                                         .build();
-               //Intercepting said created retrofit's instance
-               WeatherForecast_connector connector = retrofit.create(WeatherForecast_connector.class);
-               //Registering call with created instance
-               Call<WeatherForecast_Model> call = connector.getWeather(apikey, "1.3149014,103.7769792", weatherUnit, "flags,alerts");
-               //Make call to Forecast.io's API asynchronously to get JSON data
-               //Automatically parsed by attached LoganSquare's parser through WeatherForecast_Model
-               call.enqueue(new Callback<WeatherForecast_Model>() {
-                   @Override
-                   public void onResponse(Call<WeatherForecast_Model> call, Response<WeatherForecast_Model> response) {
-                       WeatherForecast_Model forecastModelObj = response.body();
-                       Helper helper = new Helper(MainActivity.this);
-                       helper.updateView(forecastModelObj);
-                       helper.saveData(forecastModelObj);
-                   }
-//
-                   @Override
-                   public void onFailure(Call<WeatherForecast_Model> call, Throwable t) {
-                       Toast.makeText(MainActivity.this, "Failure!", Toast.LENGTH_LONG).show();
-                   }
-               });
-               return true;
+                String exclusion = "flags,alerts";
 
-           }
+                //Create and use Retrofit Instance to get weather data
+                ForecastService_Retrofit retrofitInstance = new ForecastService_Retrofit(this, serviceBaseURL, apiKey, coordinates, weatherUnit, exclusion);
+                retrofitInstance.connectToAPI();
+                return true;
+            }
             //When the Settings button is pressed, switch to Preferences activity
-           case R.id.Settings_button: {
-               Intent intent = new Intent(this, Preferences.class);
-               startActivity(intent);
-               return true;
-           }
+            case R.id.Settings_button: {
+                Intent intent = new Intent(this, Preferences.class);
+                startActivity(intent);
+                return true;
+            }
 
-           default: {
-               return super.onOptionsItemSelected(item);
-           }
+            default: {
+                return super.onOptionsItemSelected(item);
+            }
 
-       }
-   }
+        }
+    }
 
     @Override
     protected void onResume() {
@@ -206,6 +228,20 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
+
+
+    @Override
+    protected void onDestroy() {
+        if(realm != null) {
+            realm.close();
+        }
+        super.onDestroy();
     }
 
     @Override
@@ -356,21 +392,70 @@ public class MainActivity extends AppCompatActivity {
 
             //if difference is negative, user swipe left & check if fragment already exists
             if (xMovement < 0 && !fragmentTop$2.isAdded()) {
-                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+                FragmentManager fragmentManager = getFragmentManager();
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
                 fragmentTransaction.setCustomAnimations(R.animator.fade_in, R.animator.fade_out);
                 fragmentTransaction.replace(R.id.weather_fragment, fragmentTop$2);
                 fragmentTransaction.commit();
+                fragmentManager.executePendingTransactions();
+                fragmentTop$2.updateUI(mainWeatherModel);
                 result = true;
             }
             if (xMovement > 0 && !fragmentTop$1.isAdded()) {
-                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+                FragmentManager fragmentManager = getFragmentManager();
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
                 fragmentTransaction.setCustomAnimations(R.animator.fade_in, R.animator.fade_out);
                 fragmentTransaction.replace(R.id.weather_fragment, fragmentTop$1);
                 fragmentTransaction.commit();
+                fragmentManager.executePendingTransactions();
+                fragmentTop$1.updateUI(mainWeatherModel);
                 result = true;
             }
 
             return result;
         }
+    }
+
+    //Parse model data to update the views
+    public void updateView() {
+            MainWeather_model mainWeather_model = mainWeatherModel;
+            RealmList<HourlyData_model> hourlyForecastArray = mainWeather_model.getHourly().getHourlyData_RL();
+            hourlyForecastArray.subList(0,25);
+            RealmList<DailyData_model> dailyForecastArray = mainWeather_model.getDaily().getDailyData_RL();
+
+            HourlyForecast_RecyclerAdapter hourlyAdapter = new HourlyForecast_RecyclerAdapter(this, hourlyForecastArray);
+            DailyForecast_RecyclerAdapter arrayAdapter = new DailyForecast_RecyclerAdapter(this, dailyForecastArray);
+
+            condition_main.setText(mainWeather_model.getCurrentWeather().getSummary());
+
+            String mainTemp = Helper.temperatureConverter(mainWeather_model.getCurrentWeather().getTemperature());
+            temp_main.setText(mainTemp);
+            SharedPreferences preferencesFile = PreferenceManager.getDefaultSharedPreferences(this);
+            String unitPref = preferencesFile.getString("temp_unit", "");
+            if (unitPref.equals("Celsius")) {
+                temp_unit.setText("C");
+            } else {
+                temp_unit.setText("F");
+            }
+
+            String feelTemp = Helper.temperatureConverter(mainWeather_model.getCurrentWeather().getApparentTemperature());
+            String feelTempFull = "Feels like: " + feelTemp + "°";
+            tempFeel_main.setText(feelTempFull);
+
+            hourlyForecast_rv.setAdapter(hourlyAdapter);
+            LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+            linearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+            hourlyForecast_rv.setLayoutManager(linearLayoutManager);
+
+            dailyForecast_rv.setAdapter(arrayAdapter);
+            dailyForecast_rv.setLayoutManager(new LinearLayoutManager(this));
+            dailyForecast_rv.setHasFixedSize(true);
+    }
+
+    //Split the data to relevant variables and call methods to update the views
+    public void dataSplitter(MainWeather_model mainWeather) {
+        memoryFragment.setMainWeather_model(mainWeather);
+        mainWeatherModel = mainWeather;
+        updateView();
     }
 }

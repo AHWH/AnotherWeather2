@@ -1,35 +1,45 @@
-package com.ahwh.anotherweather2.database;
+package com.ahwh.anotherweather2.weatherModel;
 
-import com.raizlabs.android.dbflow.annotation.Column;
-import com.raizlabs.android.dbflow.annotation.PrimaryKey;
-import com.raizlabs.android.dbflow.annotation.Table;
-import com.raizlabs.android.dbflow.structure.BaseModel;
+import com.bluelinelabs.logansquare.annotation.JsonField;
+import com.bluelinelabs.logansquare.annotation.JsonObject;
+
+import io.realm.RealmObject;
+import io.realm.annotations.PrimaryKey;
 
 /**
- * Created by weiho on 21/5/2016.
+ * Created by weiho on 17/6/2016.
  */
-@Table(database = WeatherDatabase.class)
-public class HourlyWeather_db extends BaseModel{
+
+@JsonObject
+public class CurrentWeather_model extends RealmObject {
     @PrimaryKey
-    public int id;
-    @Column
+    private int id;
+
+    @JsonField
     private long time;
-    @Column
+    @JsonField
     private String summary;
-    @Column
+    @JsonField
     private String icon;
-    @Column
+    @JsonField
     private double temperature;
-    @Column
+    @JsonField
     private double apparentTemperature;
-    @Column
+    @JsonField
     private double humidity;
-    @Column
+    @JsonField
     private double windSpeed;
-    @Column
+    @JsonField
     private double visibility;
-    @Column
+    @JsonField
     private double pressure;
+
+    public void setId(int id) {
+        this.id = id;
+    }
+    public int getId() {
+        return id;
+    }
 
     public void setTime(long time) {
         this.time = time;
